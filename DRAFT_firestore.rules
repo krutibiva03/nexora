@@ -1,0 +1,314 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection check document (read-only health probe)
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+    }
+
+    // -------------------------------------------------------------------------
+    // Primitives & Identity Helpers
+    // -------------------------------------------------------------------------
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidOptionalUrl(val, maxLen) {
+      return val is string && val.size() <= maxLen && (val == '' || val.matches('^https?://.*') || val.matches('^/api/uploads/.*') || val.matches('^/src/assets/.*'));
+    }
+
+    function isValidStringList(listVal, maxItems) {
+      return listVal is list && listVal.size() <= maxItems && (listVal.size() == 0 || listVal[0] is string);
+    }
+
+    // -------------------------------------------------------------------------
+    // Validation Blueprints
+    // -------------------------------------------------------------------------
+    function isValidUserPrivate(data, userId) {
+      return data.keys().hasAll(['userId', 'email', 'onboardingCompleted', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'email', 'onboardingCompleted', 'createdAt', 'updatedAt'])
+        && data.userId == userId
+        && isValidId(data.userId)
+        && isValidString(data.email, 3, 254)
+        && data.onboardingCompleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProfile(data, userId) {
+      return data.keys().hasAll(['userId', 'handle', 'displayName', 'isPublic', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'userId', 'handle', 'displayName', 'headline', 'bio', 'avatarUrl',
+          'location', 'roleTag', 'interests', 'githubUrl', 'linkedinUrl',
+          'websiteUrl', 'twitterUrl', 'isPublic', 'skillsCount', 'projectsCount',
+          'achievementsCount', 'goalsCompletedCount', 'createdAt', 'updatedAt'
+        ])
+        && data.userId == userId
+        && isValidId(data.userId)
+        && isValidString(data.handle, 2, 40)
+        && data.handle.matches('^[a-z0-9_\\-]+$')
+        && isValidString(data.displayName, 1, 80)
+        && (!('headline' in data) || isValidString(data.headline, 0, 140))
+        && (!('bio' in data) || isValidString(data.bio, 0, 1200))
+        && (!('avatarUrl' in data) || isValidOptionalUrl(data.avatarUrl, 500))
+        && (!('location' in data) || isValidString(data.location, 0, 80))
+        && (!('roleTag' in data) || isValidString(data.roleTag, 0, 60))
+        && (!('interests' in data) || isValidStringList(data.interests, 12))
+        && (!('githubUrl' in data) || isValidOptionalUrl(data.githubUrl, 300))
+        && (!('linkedinUrl' in data) || isValidOptionalUrl(data.linkedinUrl, 300))
+        && (!('websiteUrl' in data) || isValidOptionalUrl(data.websiteUrl, 300))
+        && (!('twitterUrl' in data) || isValidOptionalUrl(data.twitterUrl, 300))
+        && data.isPublic is bool
+        && (!('skillsCount' in data) || (data.skillsCount is int && data.skillsCount >= 0 && data.skillsCount <= 500))
+        && (!('projectsCount' in data) || (data.projectsCount is int && data.projectsCount >= 0 && data.projectsCount <= 500))
+        && (!('achievementsCount' in data) || (data.achievementsCount is int && data.achievementsCount >= 0 && data.achievementsCount <= 500))
+        && (!('goalsCompletedCount' in data) || (data.goalsCompletedCount is int && data.goalsCompletedCount >= 0 && data.goalsCompletedCount <= 500))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSkill(data) {
+      return data.keys().hasAll(['userId', 'name', 'category', 'kind', 'proficiency', 'goalTarget', 'goalCompleted', 'isPublic', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'userId', 'name', 'category', 'kind', 'proficiency', 'goalTarget',
+          'goalDescription', 'goalCompleted', 'isPublic', 'createdAt', 'updatedAt'
+        ])
+        && data.userId == request.auth.uid
+        && isValidId(data.userId)
+        && isValidString(data.name, 1, 60)
+        && data.category in ['Frontend', 'Backend', 'AI & ML', 'Cloud & DevOps', 'Systems & Security', 'Design & Leadership']
+        && data.kind in ['technical', 'non-technical']
+        && data.proficiency is int && data.proficiency >= 0 && data.proficiency <= 100
+        && data.goalTarget is int && data.goalTarget >= 0 && data.goalTarget <= 100
+        && (!('goalDescription' in data) || isValidString(data.goalDescription, 0, 240))
+        && data.goalCompleted is bool
+        && data.isPublic is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['userId', 'authorName', 'authorHandle', 'title', 'summary', 'category', 'technologies', 'isPublic', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'userId', 'authorName', 'authorHandle', 'title', 'summary', 'description',
+          'category', 'technologies', 'imageUrl', 'githubUrl', 'liveUrl',
+          'isPublic', 'createdAt', 'updatedAt'
+        ])
+        && data.userId == request.auth.uid
+        && isValidId(data.userId)
+        && isValidString(data.authorName, 1, 80)
+        && isValidString(data.authorHandle, 2, 40)
+        && data.authorHandle.matches('^[a-z0-9_\\-]+$')
+        && isValidString(data.title, 1, 100)
+        && isValidString(data.summary, 1, 220)
+        && (!('description' in data) || isValidString(data.description, 0, 2500))
+        && data.category in ['AI & ML', 'Web Platform', 'Developer Tools', 'Systems', 'Mobile', 'Open Source']
+        && isValidStringList(data.technologies, 12)
+        && (!('imageUrl' in data) || isValidOptionalUrl(data.imageUrl, 500))
+        && (!('githubUrl' in data) || isValidOptionalUrl(data.githubUrl, 300))
+        && (!('liveUrl' in data) || isValidOptionalUrl(data.liveUrl, 300))
+        && data.isPublic is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAchievement(data) {
+      return data.keys().hasAll(['userId', 'authorName', 'authorHandle', 'title', 'issuer', 'category', 'isPublic', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'userId', 'authorName', 'authorHandle', 'title', 'issuer', 'category',
+          'issuedDate', 'credentialId', 'credentialUrl', 'certificateFileUrl',
+          'certificateFileName', 'description', 'isPublic', 'createdAt', 'updatedAt'
+        ])
+        && data.userId == request.auth.uid
+        && isValidId(data.userId)
+        && isValidString(data.authorName, 1, 80)
+        && isValidString(data.authorHandle, 2, 40)
+        && data.authorHandle.matches('^[a-z0-9_\\-]+$')
+        && isValidString(data.title, 1, 120)
+        && isValidString(data.issuer, 1, 100)
+        && data.category in ['Certification', 'Hackathon', 'Open Source', 'Academic', 'Publication', 'Award']
+        && (!('issuedDate' in data) || isValidString(data.issuedDate, 0, 30))
+        && (!('credentialId' in data) || isValidString(data.credentialId, 0, 100))
+        && (!('credentialUrl' in data) || isValidOptionalUrl(data.credentialUrl, 300))
+        && (!('certificateFileUrl' in data) || isValidOptionalUrl(data.certificateFileUrl, 500))
+        && (!('certificateFileName' in data) || isValidString(data.certificateFileName, 0, 160))
+        && (!('description' in data) || isValidString(data.description, 0, 1000))
+        && data.isPublic is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidActivity(data) {
+      return data.keys().hasAll(['userId', 'type', 'title', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'type', 'title', 'detail', 'createdAt'])
+        && data.userId == request.auth.uid
+        && isValidId(data.userId)
+        && data.type in ['skill', 'project', 'achievement', 'goal', 'profile', 'ai']
+        && isValidString(data.title, 1, 140)
+        && (!('detail' in data) || isValidString(data.detail, 0, 260))
+        && data.createdAt is timestamp;
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+
+    match /usersPrivate/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isValidId(userId) && isVerifiedOwner(userId)
+        && isValidUserPrivate(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId) && isVerifiedOwner(userId)
+        && isValidUserPrivate(incoming(), userId)
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'onboardingCompleted', 'updatedAt']);
+      allow delete: if isValidId(userId) && isVerifiedOwner(userId);
+    }
+
+    match /profiles/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || existing().isPublic == true);
+      allow list: if existing().isPublic == true || (isSignedIn() && existing().userId == request.auth.uid);
+      allow create: if isValidId(userId) && isVerifiedOwner(userId)
+        && isValidProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId) && isVerifiedOwner(userId)
+        && isValidProfile(incoming(), userId)
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Edit Identity Profile
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'handle', 'displayName', 'headline', 'bio', 'avatarUrl',
+            'location', 'roleTag', 'interests', 'githubUrl', 'linkedinUrl',
+            'websiteUrl', 'twitterUrl', 'isPublic', 'updatedAt'
+          ]) ||
+          // Action: Sync Profile Counters
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'skillsCount', 'projectsCount', 'achievementsCount', 'goalsCompletedCount', 'updatedAt'
+          ])
+        );
+      allow delete: if isValidId(userId) && isVerifiedOwner(userId);
+    }
+
+    match /skills/{skillId} {
+      allow get: if isValidId(skillId) && ((isSignedIn() && existing().userId == request.auth.uid) || existing().isPublic == true);
+      allow list: if existing().isPublic == true || (isSignedIn() && existing().userId == request.auth.uid);
+      allow create: if isValidId(skillId) && isVerifiedUser()
+        && isValidSkill(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(skillId) && isVerifiedOwner(existing().userId)
+        && isValidSkill(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Edit Skill Details
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'category', 'kind', 'proficiency', 'goalTarget',
+            'goalDescription', 'goalCompleted', 'isPublic', 'updatedAt'
+          ]) ||
+          // Action: Update Progress / Toggle Goal
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'proficiency', 'goalCompleted', 'updatedAt'
+          ])
+        );
+      allow delete: if isValidId(skillId) && isVerifiedOwner(existing().userId);
+    }
+
+    match /projects/{projectId} {
+      allow get: if isValidId(projectId) && ((isSignedIn() && existing().userId == request.auth.uid) || existing().isPublic == true);
+      allow list: if existing().isPublic == true || (isSignedIn() && existing().userId == request.auth.uid);
+      allow create: if isValidId(projectId) && isVerifiedUser()
+        && isValidProject(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(projectId) && isVerifiedOwner(existing().userId)
+        && isValidProject(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Edit Project Details
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'authorName', 'authorHandle', 'title', 'summary', 'description',
+            'category', 'technologies', 'imageUrl', 'githubUrl', 'liveUrl',
+            'isPublic', 'updatedAt'
+          ])
+        );
+      allow delete: if isValidId(projectId) && isVerifiedOwner(existing().userId);
+    }
+
+    match /achievements/{achievementId} {
+      allow get: if isValidId(achievementId) && ((isSignedIn() && existing().userId == request.auth.uid) || existing().isPublic == true);
+      allow list: if existing().isPublic == true || (isSignedIn() && existing().userId == request.auth.uid);
+      allow create: if isValidId(achievementId) && isVerifiedUser()
+        && isValidAchievement(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(achievementId) && isVerifiedOwner(existing().userId)
+        && isValidAchievement(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Edit Achievement Details
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'authorName', 'authorHandle', 'title', 'issuer', 'category',
+            'issuedDate', 'credentialId', 'credentialUrl', 'certificateFileUrl',
+            'certificateFileName', 'description', 'isPublic', 'updatedAt'
+          ])
+        );
+      allow delete: if isValidId(achievementId) && isVerifiedOwner(existing().userId);
+    }
+
+    match /activities/{activityId} {
+      allow get: if isValidId(activityId) && isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isValidId(activityId) && isVerifiedUser()
+        && isValidActivity(incoming())
+        && incoming().createdAt == request.time;
+      allow delete: if isValidId(activityId) && isVerifiedOwner(existing().userId);
+    }
+  }
+}

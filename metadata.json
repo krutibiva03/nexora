@@ -1,0 +1,6 @@
+{
+  "name": "NEXORA",
+  "description": "Beyond Code. Beyond Limits. A multi-user developer growth and identity platform with Skill Universe, Project Galaxy, Achievement Vault, AI Career Companion, and Community Discover.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

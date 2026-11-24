@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: #070306;
+    color: #faf4f6;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: #070306;
+    color: #faf4f6;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Burgundy & Noir Glassmorphism Surfaces */
+.glass-surface {
+  background: linear-gradient(155deg, rgba(36, 9, 22, 0.54), rgba(10, 4, 9, 0.82));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(244, 91, 132, 0.14);
+  box-shadow: 0 18px 46px -16px rgba(4, 1, 5, 0.82);
+}
+
+.glass-surface-elevated {
+  background: linear-gradient(155deg, rgba(46, 11, 28, 0.82), rgba(13, 5, 11, 0.94));
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid rgba(244, 91, 132, 0.24);
+  box-shadow: 0 24px 64px -18px rgba(136, 19, 55, 0.34), 0 12px 32px rgba(0, 0, 0, 0.78);
+}
+
+/* Warm Rose & Lavender Editorial Gradient Text */
+.nexora-gradient-text {
+  background: linear-gradient(120deg, #faf4f6 8%, #f8a5be 46%, #f45b84 74%, #d9c6ec 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.nexora-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(244, 91, 132, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(217, 198, 236, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+@keyframes nexora-orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes nexora-orbit-spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes nexora-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+@keyframes nexora-pulse-glow {
+  0%, 100% {
+    opacity: 0.42;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes nexora-glitch-shimmer {
+  0%, 92%, 100% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  94% {
+    transform: translate(-1.5px, 0.5px);
+    opacity: 0.88;
+  }
+  96% {
+    transform: translate(1.5px, -0.5px);
+    opacity: 0.94;
+  }
+}
+
+.animate-orbit-slow {
+  animation: nexora-orbit-spin 44s linear infinite;
+}
+
+.animate-orbit-medium {
+  animation: nexora-orbit-spin-reverse 30s linear infinite;
+}
+
+.animate-orbit-fast {
+  animation: nexora-orbit-spin 18s linear infinite;
+}
+
+.animate-float-gentle {
+  animation: nexora-float 6.5s ease-in-out infinite;
+}
+
+.animate-orb-pulse {
+  animation: nexora-pulse-glow 5s ease-in-out infinite;
+}
+
+.animate-glitch-subtle {
+  animation: nexora-glitch-shimmer 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-orbit-slow,
+  .animate-orbit-medium,
+  .animate-orbit-fast,
+  .animate-float-gentle,
+  .animate-orb-pulse,
+  .animate-glitch-subtle {
+    animation: none !important;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

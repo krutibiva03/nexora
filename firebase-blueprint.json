@@ -1,0 +1,157 @@
+{
+  "entities": {
+    "UserPrivate": {
+      "title": "UserPrivate",
+      "description": "Private PII and account settings for a registered user, readable and writable only by the owning user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "onboardingCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "onboardingCompleted", "createdAt", "updatedAt"]
+    },
+    "DeveloperProfile": {
+      "title": "DeveloperProfile",
+      "description": "Developer Identity Studio profile with public/private visibility toggle and social links.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "handle": { "type": "string", "minLength": 2, "maxLength": 40, "pattern": "^[a-z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "headline": { "type": "string", "maxLength": 140 },
+        "bio": { "type": "string", "maxLength": 1200 },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "location": { "type": "string", "maxLength": 80 },
+        "roleTag": { "type": "string", "maxLength": 60 },
+        "interests": { "type": "array", "description": "Up to 12 topic/technology interests" },
+        "githubUrl": { "type": "string", "maxLength": 300 },
+        "linkedinUrl": { "type": "string", "maxLength": 300 },
+        "websiteUrl": { "type": "string", "maxLength": 300 },
+        "twitterUrl": { "type": "string", "maxLength": 300 },
+        "isPublic": { "type": "boolean" },
+        "skillsCount": { "type": "integer" },
+        "projectsCount": { "type": "integer" },
+        "achievementsCount": { "type": "integer" },
+        "goalsCompletedCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "handle", "displayName", "isPublic", "createdAt", "updatedAt"]
+    },
+    "SkillItem": {
+      "title": "SkillItem",
+      "description": "A technical or non-technical skill tracked in Skill Universe with proficiency and learning goal.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "category": {
+          "type": "string",
+          "enum": ["Frontend", "Backend", "AI & ML", "Cloud & DevOps", "Systems & Security", "Design & Leadership"]
+        },
+        "kind": { "type": "string", "enum": ["technical", "non-technical"] },
+        "proficiency": { "type": "integer" },
+        "goalTarget": { "type": "integer" },
+        "goalDescription": { "type": "string", "maxLength": 240 },
+        "goalCompleted": { "type": "boolean" },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "category", "kind", "proficiency", "goalTarget", "goalCompleted", "isPublic", "createdAt", "updatedAt"]
+    },
+    "ProjectItem": {
+      "title": "ProjectItem",
+      "description": "A developer project showcased in Project Galaxy.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "authorHandle": { "type": "string", "minLength": 2, "maxLength": 40, "pattern": "^[a-z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 220 },
+        "description": { "type": "string", "maxLength": 2500 },
+        "category": {
+          "type": "string",
+          "enum": ["AI & ML", "Web Platform", "Developer Tools", "Systems", "Mobile", "Open Source"]
+        },
+        "technologies": { "type": "array", "description": "Up to 12 technologies used" },
+        "imageUrl": { "type": "string", "maxLength": 500 },
+        "githubUrl": { "type": "string", "maxLength": 300 },
+        "liveUrl": { "type": "string", "maxLength": 300 },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "authorName", "authorHandle", "title", "summary", "category", "technologies", "isPublic", "createdAt", "updatedAt"]
+    },
+    "AchievementItem": {
+      "title": "AchievementItem",
+      "description": "A certificate or milestone stored in Achievement Vault.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "authorHandle": { "type": "string", "minLength": 2, "maxLength": 40, "pattern": "^[a-z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "issuer": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "category": {
+          "type": "string",
+          "enum": ["Certification", "Hackathon", "Open Source", "Academic", "Publication", "Award"]
+        },
+        "issuedDate": { "type": "string", "maxLength": 30 },
+        "credentialId": { "type": "string", "maxLength": 100 },
+        "credentialUrl": { "type": "string", "maxLength": 300 },
+        "certificateFileUrl": { "type": "string", "maxLength": 500 },
+        "certificateFileName": { "type": "string", "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "authorName", "authorHandle", "title", "issuer", "category", "isPublic", "createdAt", "updatedAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Private chronological activity log for a user's Progress Dashboard.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "type": { "type": "string", "enum": ["skill", "project", "achievement", "goal", "profile", "ai"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "detail": { "type": "string", "maxLength": 260 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "title", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/usersPrivate/{userId}": {
+      "schema": { "$ref": "#/entities/UserPrivate" },
+      "description": "Owner-only private PII record."
+    },
+    "/profiles/{userId}": {
+      "schema": { "$ref": "#/entities/DeveloperProfile" },
+      "description": "Developer Identity Studio profiles; public when isPublic == true."
+    },
+    "/skills/{skillId}": {
+      "schema": { "$ref": "#/entities/SkillItem" },
+      "description": "User skills and learning goals."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/ProjectItem" },
+      "description": "User projects showcased in Project Galaxy."
+    },
+    "/achievements/{achievementId}": {
+      "schema": { "$ref": "#/entities/AchievementItem" },
+      "description": "User certificates and achievements."
+    },
+    "/activities/{activityId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Owner-only recent activity entries."
+    }
+  }
+}
